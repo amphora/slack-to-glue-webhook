@@ -112,7 +112,7 @@ class WebhookProcessor:
             logger.error(f"Error forwarding webhook: {e}")
             return {
                 'status': 'error',
-                'message': f'Error forwarding webhook: {str(e)}'
+                'message': 'Error forwarding webhook to target server'
             }
 
 # Initialize the webhook processor
