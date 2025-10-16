@@ -81,18 +81,28 @@ The service uses a YAML configuration file (`config.yml`) to map service IDs to 
 ```yaml
 services:
   example-service:
-    glue_id: "glue-12345"
-    thread_id: "thread-67890"
-    webhook_url: "https://api.glue.example.com/webhook"
+    target: "grp_xxxxxxxxxxxxxxxxxxxxx"  # Glue group/thread ID
+    webhook_url: "https://api.gluegroups.com/webhook/wbh_xxxxx/xxxxx"
     description: "Example service for testing"
+
+# Global configuration (optional)
+global:
+  timeout_seconds: 30
+  retry_attempts: 3
+  log_level: "INFO"
 ```
 
 ### Configuration Fields
 
-- `glue_id`: The Glue.ai identifier for this service
-- `thread_id`: The thread identifier for message threading
-- `webhook_url`: The endpoint URL to forward processed webhooks
+**Service Configuration:**
+- `target`: The Glue.ai group or thread identifier (e.g., `grp_xxxxxxxxxxxxxxxxxxxxx`)
+- `webhook_url`: The Glue webhook endpoint URL to forward processed webhooks
 - `description`: Optional description of the service
+
+**Global Configuration (optional):**
+- `timeout_seconds`: Request timeout in seconds (default: 30)
+- `retry_attempts`: Number of retry attempts for failed requests (default: 3)
+- `log_level`: Logging level - INFO, DEBUG, WARNING, ERROR (default: INFO)
 
 ## Environment Variables
 
