@@ -65,9 +65,9 @@ class WebhookProcessor:
         # Get required configuration values
         glue_id = service_config.get('glue_id')
         thread_id = service_config.get('thread_id')
-        target_url = service_config.get('target_url')
-        
-        if not all([glue_id, thread_id, target_url]):
+        webhook_url = service_config.get('webhook_url')
+
+        if not all([glue_id, thread_id, webhook_url]):
             logger.error(f"Incomplete configuration for service {service_id}")
             return {
                 'status': 'error', 
@@ -85,9 +85,9 @@ class WebhookProcessor:
         
         # Forward the request
         try:
-            logger.info(f"Forwarding webhook for service {service_id} to {target_url}")
+            logger.info(f"Forwarding webhook for service {service_id} to {webhook_url}")
             response = requests.post(
-                target_url,
+                webhook_url,
                 json=forward_payload,
                 headers={'Content-Type': 'application/json'},
                 timeout=30
@@ -127,16 +127,51 @@ def health_check():
 def handle_webhook(service_id: str):
     """Handle incoming webhook requests"""
     try:
-        # Get the JSON payload
-        if not request.is_json:
-            logger.warning(f"Non-JSON request received for service {service_id}")
+        logger.info(f"Received request for service {service_id}")
+        logger.info(f"Content-Type: {request.content_type}")
+
+        payload = None
+
+        # Handle form-encoded data (common for Slack-style webhooks)
+        if request.content_type and 'application/x-www-form-urlencoded' in request.content_type:
+            # Data is form-encoded with JSON in a 'payload' field
+            form_data = request.form.get('payload')
+            if form_data:
+                try:
+                    import json
+                    payload = json.loads(form_data)
+                    logger.info(f"Successfully parsed form-encoded JSON for service {service_id}")
+                except json.JSONDecodeError as e:
+                    logger.warning(f"Failed to parse JSON from form payload: {e}")
+                    return jsonify({
+                        'status': 'error',
+                        'message': 'Invalid JSON in payload field'
+                    }), 400
+            else:
+                logger.warning(f"No 'payload' field found in form data")
+                return jsonify({
+                    'status': 'error',
+                    'message': 'Form data must contain a "payload" field with JSON'
+                }), 400
+        else:
+            # Try to parse as direct JSON
+            try:
+                payload = request.get_json(force=True)
+            except Exception as e:
+                logger.warning(f"Failed to parse JSON from request for service {service_id}: {e}")
+                return jsonify({
+                    'status': 'error',
+                    'message': 'Request body must be valid JSON'
+                }), 400
+
+        if not payload:
+            logger.warning(f"Empty payload received for service {service_id}")
             return jsonify({
-                'status': 'error', 
-                'message': 'Request must contain JSON data'
+                'status': 'error',
+                'message': 'Request body cannot be empty'
             }), 400
-        
-        payload = request.get_json()
-        logger.info(f"Received webhook for service {service_id}")
+
+        logger.info(f"Successfully parsed webhook for service {service_id}")
         
         # Process the webhook
         result = processor.process_webhook(service_id, payload)

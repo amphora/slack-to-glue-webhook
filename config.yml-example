@@ -1,0 +1,23 @@
+# Configuration file for Slack-to-Glue Webhook Service
+# Maps service IDs to their corresponding Glue configurations
+
+services:
+  # Example service configuration
+  production-alerts:
+    glue_id: "glue-prod-001"
+    thread_id: "thread-alerts-001"
+    webhook_url: "https://alerts.glue.example.com/webhook"
+    description: "Production alert notifications"
+
+  # Development service
+  dev-notifications:
+    glue_id: "glue-dev-123"
+    thread_id: "thread-dev-456"
+    webhook_url: "https://dev.glue.example.com/webhook"
+    description: "Development environment notifications"
+
+# Global configuration (optional)
+global:
+  timeout_seconds: 30
+  retry_attempts: 3
+  log_level: "INFO"

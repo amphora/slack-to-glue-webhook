@@ -82,8 +82,8 @@ The service uses a YAML configuration file (`config.yml`) to map service IDs to 
 services:
   example-service:
     glue_id: "glue-12345"
-    thread_id: "thread-67890" 
-    target_url: "https://api.glue.example.com/webhook"
+    thread_id: "thread-67890"
+    webhook_url: "https://api.glue.example.com/webhook"
     description: "Example service for testing"
 ```
 
@@ -91,7 +91,7 @@ services:
 
 - `glue_id`: The Glue.ai identifier for this service
 - `thread_id`: The thread identifier for message threading
-- `target_url`: The endpoint URL to forward processed webhooks
+- `webhook_url`: The endpoint URL to forward processed webhooks
 - `description`: Optional description of the service
 
 ## Environment Variables
