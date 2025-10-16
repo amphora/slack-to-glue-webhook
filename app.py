@@ -27,11 +27,11 @@ class ConfigError(Exception):
 
 class WebhookProcessor:
     """Handles webhook processing and forwarding"""
-    
+
     def __init__(self, config_path: str = "config.yml"):
         self.config_path = config_path
         self.config = self._load_config()
-        
+
     def _load_config(self) -> Dict[str, Any]:
         """Load configuration from YAML file"""
         try:
@@ -45,43 +45,97 @@ class WebhookProcessor:
         except yaml.YAMLError as e:
             logger.error(f"Error parsing YAML configuration: {e}")
             raise ConfigError(f"Error parsing YAML configuration: {e}")
-    
+
+    def reload_config(self) -> None:
+        """Reload configuration from YAML file (useful in debug mode)"""
+        self.config = self._load_config()
+
     def get_service_config(self, service_id: str) -> Optional[Dict[str, Any]]:
         """Get configuration for a specific service ID"""
+        # Reload config in debug mode for easier development
+        if app.debug or os.environ.get('DEBUG', 'false').lower() == 'true':
+            self.reload_config()
+            logger.debug(f"Config reloaded in debug mode")
+
         services = self.config.get('services', {})
         return services.get(service_id)
     
+    def _convert_slack_to_markdown(self, text: str) -> str:
+        """Convert Slack markdown format to standard markdown"""
+        import re
+
+        # Convert Slack links: <url|text> to [text](url)
+        text = re.sub(r'<([^|>]+)\|([^>]+)>', r'[\2](\1)', text)
+
+        # Convert bare URLs: <url> to just url (or keep as-is for markdown)
+        text = re.sub(r'<(https?://[^>]+)>', r'\1', text)
+
+        return text
+
     def process_webhook(self, service_id: str, payload: Dict[str, Any]) -> Dict[str, Any]:
         """Process webhook and forward to configured endpoint"""
         service_config = self.get_service_config(service_id)
-        
+
         if not service_config:
             logger.warning(f"No configuration found for service ID: {service_id}")
             return {
                 'status': 'error',
                 'message': f'No configuration found for service ID: {service_id}'
             }
-        
+
         # Get required configuration values
-        glue_id = service_config.get('glue_id')
-        thread_id = service_config.get('thread_id')
+        target = service_config.get('target')
         webhook_url = service_config.get('webhook_url')
 
-        if not all([glue_id, thread_id, webhook_url]):
+        if not all([target, webhook_url]):
             logger.error(f"Incomplete configuration for service {service_id}")
             return {
-                'status': 'error', 
-                'message': 'Incomplete service configuration'
+                'status': 'error',
+                'message': 'Incomplete service configuration (missing target or webhook_url)'
             }
-        
-        # Prepare the payload to forward
+
+        # Extract the thread subject from the top-level text field
+        thread_subject = payload.get('text', '').strip()
+        # Remove markdown heading symbols if present
+        if thread_subject.startswith('#'):
+            thread_subject = thread_subject.lstrip('#').strip()
+
+        # Extract the main message text from the attachments
+        message_text = ''
+        attachments = payload.get('attachments', [])
+        if attachments and len(attachments) > 0:
+            message_text = attachments[0].get('text', '')
+
+        # If no text in attachments, fall back to top-level text
+        if not message_text:
+            message_text = payload.get('text', '')
+            # If we used the text as subject, don't duplicate it
+            if message_text == payload.get('text', ''):
+                thread_subject = ''  # Don't create a thread if there's only one piece of text
+
+        # If still no text, try other fields
+        if not message_text and 'message' in payload:
+            message_text = payload['message'].get('text', '')
+
+        if not message_text:
+            logger.warning(f"No text content found in webhook payload for service {service_id}")
+            message_text = str(payload)  # Fallback to stringified payload
+
+        # Convert Slack markdown to standard markdown
+        message_text = self._convert_slack_to_markdown(message_text)
+
+        # Prepare the Glue-formatted payload
+        # Glue expects: { "text": "...", "target": "grp_xxx or thr_xxx" }
+        # Optionally with "threadSubject" to create a new thread
         forward_payload = {
-            'glue_id': glue_id,
-            'thread_id': thread_id,
-            'original_payload': payload,
-            'service_id': service_id,
-            'timestamp': payload.get('timestamp', '')
+            'text': message_text,
+            'target': target
         }
+
+        # Add threadSubject if we have one (creates a new thread in Glue)
+        if thread_subject:
+            forward_payload['threadSubject'] = thread_subject
+            logger.info(f"Creating Glue thread with subject: {thread_subject}")
         
         # Forward the request
         try:

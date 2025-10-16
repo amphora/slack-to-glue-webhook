@@ -1,20 +1,23 @@
 # Configuration file for Slack-to-Glue Webhook Service
 # Maps service IDs to their corresponding Glue configurations
 
-services:
-  # Example service configuration
-  production-alerts:
-    glue_id: "glue-prod-001"
-    thread_id: "thread-alerts-001"
-    webhook_url: "https://alerts.glue.example.com/webhook"
-    description: "Production alert notifications"
+# Note that Glue allows you to target a Thread or a Group
+# - Group IDs start with grp_ (e.g., grp_2hSyORgf8VqMLg0ADIvTi9oY6Nk)
+# - Thread IDs start with thr_ (e.g., thr_abc123)
+# - Workspace general group uses wks_ (e.g., wks_xyz789)
 
-  # Development service
+services:
+  # Example service configuration - posting to a group
+  production-alerts:
+    target: "grp_2hSyORgf8VqMLg0ADIvTi9oY6Nk"
+    webhook_url: "https://alerts.glue.example.com/webhook"
+    description: "Production alert notifications sent to a Glue group"
+
+  # Development service - posting to a thread
   dev-notifications:
-    glue_id: "glue-dev-123"
-    thread_id: "thread-dev-456"
+    target: "thr_abc123def456"
     webhook_url: "https://dev.glue.example.com/webhook"
-    description: "Development environment notifications"
+    description: "Development environment notifications sent to a Glue thread"
 
 # Global configuration (optional)
 global:
