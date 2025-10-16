@@ -2,9 +2,12 @@
   "name": "Slack-to-Glue Webhook",
   "image": "mcr.microsoft.com/devcontainers/python:3.11",
   "features": {
-    "ghcr.io/devcontainers/features/docker-in-docker:2": {}
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {},
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "lts"
+    }
   },
-  "postCreateCommand": "pip install -r requirements.txt",
+  "postCreateCommand": "npm install -g npm@latest && pip install --upgrade pip && pip install -r requirements.txt && npm install -g @google/gemini-cli @anthropic-ai/claude-code @openai/codex ngrok",
   "customizations": {
     "vscode": {
       "settings": {
