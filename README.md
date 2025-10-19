@@ -27,8 +27,14 @@ A Python web application that accepts HTTP POST requests to `/services/<ID>` end
 # Install dependencies
 pip install -r requirements.txt
 
-# Run the application
+# Run the application with default config (config.yml)
 python app.py
+
+# Run with a different config file (e.g., for development)
+CONFIG_FILE=dev-config.yml python app.py
+
+# Run with debug mode and custom config
+DEBUG=true CONFIG_FILE=dev-config.yml python app.py
 ```
 
 The service will be available at `http://localhost:8080`
@@ -39,8 +45,14 @@ The service will be available at `http://localhost:8080`
 # Build the image
 docker build -t slack-to-glue-webhook .
 
-# Run the container
+# Run the container with default config
 docker run -p 8080:8080 slack-to-glue-webhook
+
+# Run with a custom config file
+docker run -p 8080:8080 \
+  -v /path/to/your/dev-config.yml:/app/dev-config.yml \
+  -e CONFIG_FILE=dev-config.yml \
+  slack-to-glue-webhook
 ```
 
 ## API Endpoints
@@ -108,6 +120,7 @@ global:
 
 - `PORT`: Server port (default: 8080)
 - `DEBUG`: Enable debug mode (default: false)
+- `CONFIG_FILE`: Path to configuration file (default: config.yml)
 
 ## Deployment
 

@@ -169,8 +169,10 @@ class WebhookProcessor:
                 'message': 'Error forwarding webhook to target server'
             }
 
-# Initialize the webhook processor
-processor = WebhookProcessor()
+# Initialize the webhook processor with config file from environment or default
+config_file = os.environ.get('CONFIG_FILE', 'config.yml')
+logger.info(f"Using configuration file: {config_file}")
+processor = WebhookProcessor(config_path=config_file)
 
 @app.route('/health')
 def health_check():
