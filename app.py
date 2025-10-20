@@ -317,10 +317,17 @@ class WebhookProcessor:
             print("All configured webhooks tested successfully!")
             exit(0)
 
-# Initialize the webhook processor with config file from environment or default
-config_file = os.environ.get('CONFIG_FILE', 'config.yml')
-logger.info(f"Using configuration file: {config_file}")
-processor = WebhookProcessor(config_path=config_file)
+# Global processor instance (initialized lazily)
+processor = None
+
+def get_processor():
+    """Get or create the webhook processor instance (lazy initialization)"""
+    global processor
+    if processor is None:
+        config_file = os.environ.get('CONFIG_FILE', 'config.yml')
+        logger.info(f"Using configuration file: {config_file}")
+        processor = WebhookProcessor(config_path=config_file)
+    return processor
 
 @app.route('/health')
 def health_check():
@@ -376,9 +383,9 @@ def handle_webhook(service_id: str):
             }), 400
 
         logger.info(f"Successfully parsed webhook for service {service_id}")
-        
+
         # Process the webhook
-        result = processor.process_webhook(service_id, payload)
+        result = get_processor().process_webhook(service_id, payload)
         
         # Return appropriate status code based on result
         if result['status'] == 'success':
@@ -409,7 +416,7 @@ if __name__ == '__main__':
 
     if test_mode:
         # Run webhook tests and exit
-        processor.test_webhooks()
+        get_processor().test_webhooks()
     else:
         # Development server
         port = int(os.environ.get('PORT', 8080))
