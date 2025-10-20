@@ -74,15 +74,19 @@ For development with a separate config:
 # Build the image
 docker build -t slack-to-glue-webhook .
 
-# Run the container with default config
-docker run -p 8080:8080 slack-to-glue-webhook
+# Run the container (you must mount your config.yml file)
+docker run -p 8080:8080 \
+  -v /path/to/your/config.yml:/app/config.yml \
+  slack-to-glue-webhook
 
-# Run with a custom config file
+# Or run with a custom config file name
 docker run -p 8080:8080 \
   -v /path/to/your/dev-config.yml:/app/dev-config.yml \
   -e CONFIG_FILE=dev-config.yml \
   slack-to-glue-webhook
 ```
+
+**Note:** The Docker image does not include `config.yml` - you must mount your own config file at runtime. An example configuration is included as `config.yml-example` in the container for reference.
 
 ## API Endpoints
 

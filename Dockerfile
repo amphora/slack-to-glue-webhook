@@ -21,9 +21,9 @@ COPY requirements.txt .
 # Install Python dependencies
 RUN pip install --no-cache-dir --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org -r requirements.txt
 
-# Copy application code
+# Copy application code and example config
 COPY app.py .
-COPY config.yml .
+COPY config.yml-example .
 
 # Create a non-root user
 RUN useradd --create-home --shell /bin/bash app \
