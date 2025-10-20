@@ -19,6 +19,29 @@ python app.py
 
 The server runs on port 8080 by default. Override with `PORT=<port>` environment variable.
 
+### Testing Webhooks
+```bash
+# Test all configured webhooks (sends test messages to Glue and Slack webhooks)
+TEST_MODE=true python app.py
+
+# Test with a specific config file
+TEST_MODE=true CONFIG_FILE=dev-config.yml python app.py
+```
+
+Test mode will:
+- Load all services from `config.yml`
+- Send test messages to each configured `webhook_url` (Glue)
+- Send test messages to each configured `slack_webhook` (if present)
+- Display detailed results for each webhook
+- Print a summary of successes/failures
+- Exit with code 0 (success) or 1 (failures/errors)
+
+This is useful for:
+- Verifying webhook URLs are correct before going live
+- Testing connectivity to Glue and Slack APIs
+- Validating configuration without running the full server
+- CI/CD pipeline validation
+
 ### Testing with Ngrok
 ```bash
 # First time setup: authenticate ngrok

@@ -8,12 +8,14 @@
 
 services:
   # Example service configuration - posting to a group
+  # Optionally include slack_webhook to also forward the original payload to Slack
   production-alerts:
     target: "grp_2hSyORgf8VqMLg0ADIvTi9oY6Nk"
     webhook_url: "https://alerts.glue.example.com/webhook"
-    description: "Production alert notifications sent to a Glue group"
+    slack_webhook: "https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXX"  # Optional
+    description: "Production alert notifications sent to a Glue group and Slack"
 
-  # Development service - posting to a thread
+  # Development service - posting to a thread (without Slack forwarding)
   dev-notifications:
     target: "thr_abc123def456"
     webhook_url: "https://dev.glue.example.com/webhook"

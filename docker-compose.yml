@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  webhook-proxy:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: slack-to-glue-webhook
+    ports:
+      - "8080:8080"
+    volumes:
+      # Mount your config file here - update the path as needed
+      # For development: uncomment the line below and create dev-config.yml
+      # - ./dev-config.yml:/app/dev-config.yml
+
+      # For production: mount your actual config.yml
+      - ./config.yml:/app/config.yml
+    environment:
+      # Set to 'true' to enable debug mode (auto-reload config on each request)
+      - DEBUG=false
+
+      # Specify which config file to use (default: config.yml)
+      # - CONFIG_FILE=dev-config.yml
+
+      # Override the default port if needed
+      - PORT=8080
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8080/health', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+    networks:
+      - webhook-network
+
+networks:
+  webhook-network:
+    driver: bridge

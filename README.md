@@ -41,6 +41,35 @@ The service will be available at `http://localhost:8080`
 
 ### Docker Deployment
 
+#### Using Docker Compose (Recommended)
+
+```bash
+# Start the service (builds image if needed)
+docker compose up -d
+
+# View logs
+docker compose logs -f
+
+# Stop the service
+docker compose down
+
+# Rebuild after code changes
+docker compose up -d --build
+```
+
+To customize the configuration:
+1. Copy `config.yml-example` to `config.yml`
+2. Edit `config.yml` with your service configurations
+3. The compose file automatically mounts `config.yml` into the container
+4. Restart the service: `docker compose restart`
+
+For development with a separate config:
+1. Uncomment the `dev-config.yml` volume mount in `docker-compose.yml`
+2. Set `CONFIG_FILE=dev-config.yml` in the environment section
+3. Restart: `docker compose up -d`
+
+#### Using Docker CLI
+
 ```bash
 # Build the image
 docker build -t slack-to-glue-webhook .
@@ -141,8 +170,10 @@ The project includes a GitHub Actions workflow that automatically builds and pub
 ```
 ├── app.py                    # Main Flask application
 ├── config.yml               # Service configuration
+├── config.yml-example       # Example configuration file
 ├── requirements.txt         # Python dependencies
 ├── Dockerfile              # Docker build configuration
+├── docker-compose.yml      # Docker Compose configuration
 ├── .devcontainer/          # VS Code DevContainer setup
 │   └── devcontainer.json
 └── .github/workflows/      # CI/CD pipeline
