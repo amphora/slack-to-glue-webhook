@@ -29,7 +29,12 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install pytest requests-mock
-        
+
+    - name: Setup config file for testing
+      run: |
+        cp config.yml-example config.yml
+        echo "Using example config for tests"
+
     - name: Run basic tests
       run: |
         python -c "import app; print('App module loads successfully')"
@@ -75,7 +80,30 @@ jobs:
 
     - name: Test Docker image
       run: |
-        docker run --rm -d --name test-container -p 8080:8080 ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+        # Create a test config file
+        cat > test-config.yml << 'EOF'
+        services:
+          test-service:
+            target: "grp_test123"
+            webhook_url: "https://example.com/webhook"
+            description: "Test service for CI"
+        global:
+          timeout_seconds: 30
+          log_level: "INFO"
+        EOF
+
+        # Run container with mounted test config
+        docker run --rm -d --name test-container \
+          -p 8080:8080 \
+          -v $(pwd)/test-config.yml:/app/config.yml \
+          ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+
+        # Wait for container to start
         sleep 10
+
+        # Test health endpoint
         curl -f http://localhost:8080/health || exit 1
+
+        # Cleanup
         docker stop test-container
+        rm test-config.yml
